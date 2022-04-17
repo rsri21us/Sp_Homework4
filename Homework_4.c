@@ -20,6 +20,83 @@ int current_jobs_running_count = 0;
 
 time_t t;
 
+void *execute_job(void *arg){
+    int fdout, fderr;
+
+    current_jobs_running_count++;
+
+
+    struct JOB* job = (struct JOB*) arg;
+
+    char file_name[4096];
+    sprintf(file_name,"%d.out",job->jobid);
+    if ((fdout = open(file_name, O_CREAT | O_WRONLY, 0755)) == -1) { 
+        printf("Error opening file for output\n");
+        exit(-1); 
+    } 
+
+    char err_file_name[4096];
+    sprintf(err_file_name,"%d.err",job->jobid);
+    if ((fderr = open(err_file_name, O_CREAT | O_WRONLY, 0755)) == -1) { 
+        printf("Error opening file for error\n");
+        exit(-1); 
+    } 
+    // printf("execute_job");
+
+    time(&t);
+    strcpy(job->job_start_time,strtok(ctime(&t),"\n"));
+    // printf("start time:%s",job->job_start_time);
+    // job->job_start_time = ;
+    
+    // job->job_start_time = gettime();
+    
+
+    job->status = RUNNING;
+    pid_t pid = fork();
+    
+    if(pid == 0){
+
+        dup2(fdout, STDOUT_FILENO);
+        dup2(fderr,STDERR_FILENO);
+        
+        execvp(job->commands[0],job->commands);
+        perror("exec");
+	    exit(-1);
+
+    }else if(pid > 0){
+
+        int status;
+        wait(&status);
+        job->status = COMPLETED;
+        time(&t);
+        strcpy(job->job_end_time, strtok(ctime(&t),"\n"));
+        if(WIFEXITED(status))
+        {
+            if(WEXITSTATUS(status) == 0)
+            {
+                job->status = COMPLETED;
+            }
+            else
+            {
+                job->status = ERROR;
+            }
+        }
+        else
+        {
+            job->status = ERROR;
+        }
+
+    }else{
+        perror("fork");
+        exit(EXIT_FAILURE);
+    }
+    current_jobs_running_count--;
+
+
+    return (NULL);
+}
+
+
 void *execute_main_thread(void *arg){
     while(1){
         if(job_queue->count > 0){
