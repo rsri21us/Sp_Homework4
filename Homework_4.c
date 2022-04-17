@@ -112,6 +112,42 @@ void *execute_main_thread(void *arg){
     return (NULL);
 }
 
+
+void show_history(int n){
+    int i;
+    int max_command_len = 0;
+    int max_starttime_len = 0;
+    int max_endtime_len = 0;
+    char job_status[8];
+
+    char jobid_str[100];
+    for(i=0;i<n;i++){
+        if((jobs[i].status == COMPLETED) || (jobs[i].status == ERROR)){
+            if(max_command_len < strlen(jobs[i].command))
+                max_command_len = strlen(jobs[i].command);
+            if(max_starttime_len < strlen(jobs[i].job_start_time))
+                max_starttime_len = strlen(jobs[i].job_start_time);
+            // printf("%s",jobs[i].job_end_time);
+            if(max_endtime_len < strlen(jobs[i].job_end_time))
+                max_endtime_len = strlen(jobs[i].job_end_time);
+        }
+    }
+    printf("jobid\t%*s\t%*s\t%*s\tstatus\n",-max_command_len,"command",-max_starttime_len,"starttime",-max_endtime_len,"endtime");
+    for(i=0;i<n;i++){
+        if((jobs[i].status == COMPLETED) || (jobs[i].status == ERROR)){
+            // printf("%s %s",jobs[i].job_start_time,jobs[i].job_end_time);
+            sprintf(jobid_str,"%d",jobs[i].jobid);
+            if(jobs[i].status == COMPLETED){
+                strcpy(job_status,"SUCCESS");
+            }
+            else if(jobs[i].status == ERROR){
+                strcpy(job_status,"FAILED");
+            }
+            printf("%d\t%*s\t%s\t%s\t%s\n",jobs[i].jobid,-max_command_len,jobs[i].command,jobs[i].job_start_time,jobs[i].job_end_time,job_status);
+        }
+    }
+}
+
 void init_jobs(){
     int job_no = 0;
     while(1){
