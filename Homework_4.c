@@ -147,7 +147,32 @@ void show_history(int n){
         }
     }
 }
+void show_jobs(int n){
+    int i;
+    int max_command_len = 0;
+    char job_status[8];
 
+    char jobid_str[100];
+    for(i=0;i<n;i++){
+        if((jobs[i].status == RUNNING) || (jobs[i].status == WAITING)){
+            if(max_command_len < strlen(jobs[i].command))
+                max_command_len = strlen(jobs[i].command);
+        }
+    }
+    printf("jobid\t%*s\tstatus\n",-max_command_len,"command");
+    for(i=0;i<n;i++){
+        if((jobs[i].status == RUNNING) || (jobs[i].status == WAITING)){
+            sprintf(jobid_str,"%d",jobs[i].jobid);
+            if(jobs[i].status == RUNNING){
+                strcpy(job_status,"RUNNING");
+            }
+            else if(jobs[i].status == WAITING){
+                strcpy(job_status,"WAITING");
+            }
+            printf("%d\t%*s\t%s\n",jobs[i].jobid,-max_command_len,jobs[i].command,job_status);
+        }
+    }
+}
 void init_jobs(){
     int job_no = 0;
     while(1){
